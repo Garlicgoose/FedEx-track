@@ -1,0 +1,1169 @@
+#读取json文件
+
+import json
+import os
+from collections import Counter
+from datetime import datetime
+
+import pandas as pd
+
+
+# ============================================================
+# 配置区域
+# ============================================================
+
+# FedEx MPS API 返回的 JSON 文件
+JSON_FILE = r"C:\Users\pengj8\AppData\Local\Programs\Microsoft VS Code\mps_result.json"
+
+# 输出文件
+OUTPUT_EXCEL = r"FedEx_MPS_子单状态.xlsx"
+OUTPUT_CSV = r"FedEx_MPS_子单状态.csv"
+
+# 如果已经知道主单号，可以填在这里
+# 例如：MASTER_TRACKING_NUMBER = "123456789012"
+# 不知道则保持空字符串
+MASTER_TRACKING_NUMBER = ""
+
+
+# ============================================================
+# 通用辅助函数
+# ============================================================
+
+def safe_text(value):
+    """
+    将任意值安全转换成字符串。
+    """
+    if value is None:
+        return ""
+
+    if isinstance(value, str):
+        return value.strip()
+
+    return str(value).strip()
+
+
+def first_non_empty(*values):
+    """
+    返回第一个非空值。
+    """
+    for value in values:
+        text = safe_text(value)
+
+        if text:
+            return text
+
+    return ""
+
+
+def nested_get(data, *keys, default=None):
+    """
+    安全读取嵌套字典字段。
+
+    示例：
+    nested_get(item, "latestStatusDetail", "description")
+    """
+    current = data
+
+    for key in keys:
+        if not isinstance(current, dict):
+            return default
+
+        current = current.get(key)
+
+        if current is None:
+            return default
+
+    return current
+
+
+def normalize_tracking_number(value):
+    """
+    清理运单号中的空格。
+    """
+    return safe_text(value).replace(" ", "")
+
+
+# ============================================================
+# 读取 JSON
+# ============================================================
+
+def load_json(json_file):
+    """
+    读取 FedEx API 返回的 JSON 文件。
+    """
+    if not os.path.exists(json_file):
+        raise FileNotFoundError(
+            f"找不到 JSON 文件：{os.path.abspath(json_file)}"
+        )
+
+    with open(json_file, "r", encoding="utf-8-sig") as file:
+        return json.load(file)
+
+
+# ============================================================
+# 查找所有 trackResults
+# ============================================================
+
+def find_track_results(data):
+    """
+    递归查找 JSON 中所有名为 trackResults 的列表。
+
+    兼容常见结构：
+
+    output.completeTrackResults[].trackResults[]
+
+    或：
+
+    output.trackResults[]
+
+    或其他包含 trackResults 的嵌套格式。
+    """
+    found_results = []
+
+    def walk(node):
+        if isinstance(node, dict):
+
+            for key, value in node.items():
+
+                if key == "trackResults" and isinstance(value, list):
+
+                    for item in value:
+                        if isinstance(item, dict):
+                            found_results.append(item)
+
+                else:
+                    walk(value)
+
+        elif isinstance(node, list):
+
+            for item in node:
+                walk(item)
+
+    walk(data)
+
+    return found_results
+
+
+def find_complete_track_results(data):
+    """
+    查找 completeTrackResults。
+
+    部分 FedEx 返回中，每个 completeTrackResults 项目代表一组
+    主单和子单查询结果。
+    """
+    found_results = []
+
+    def walk(node):
+        if isinstance(node, dict):
+
+            for key, value in node.items():
+
+                if (
+                    key == "completeTrackResults"
+                    and isinstance(value, list)
+                ):
+                    found_results.extend(
+                        item
+                        for item in value
+                        if isinstance(item, dict)
+                    )
+
+                else:
+                    walk(value)
+
+        elif isinstance(node, list):
+
+            for item in node:
+                walk(item)
+
+    walk(data)
+
+    return found_results
+
+
+# ============================================================
+# 提取运单号
+# ============================================================
+
+def get_tracking_number(track_result):
+    """
+    从单条 trackResult 中提取运单号。
+    """
+    tracking_number_info = track_result.get(
+        "trackingNumberInfo",
+        {}
+    )
+
+    if not isinstance(tracking_number_info, dict):
+        tracking_number_info = {}
+
+    tracking_number = first_non_empty(
+        tracking_number_info.get("trackingNumber"),
+        track_result.get("trackingNumber"),
+        track_result.get("trackingNbr"),
+        track_result.get("trackingNo"),
+    )
+
+    return normalize_tracking_number(tracking_number)
+
+
+def get_requested_tracking_number(complete_result):
+    """
+    提取本次查询请求中的运单号。
+
+    在部分 FedEx 返回中，此字段可能是主单号。
+    """
+    return normalize_tracking_number(
+        first_non_empty(
+            complete_result.get("trackingNumber"),
+            nested_get(
+                complete_result,
+                "trackingNumberInfo",
+                "trackingNumber"
+            ),
+        )
+    )
+
+
+# ============================================================
+# 提取状态
+# ============================================================
+
+def get_status_code(track_result):
+    """
+    提取最新状态代码。
+    """
+    latest_status = track_result.get(
+        "latestStatusDetail",
+        {}
+    )
+
+    if not isinstance(latest_status, dict):
+        latest_status = {}
+
+    return first_non_empty(
+        latest_status.get("derivedCode"),
+        latest_status.get("code"),
+        latest_status.get("statusCode"),
+        track_result.get("statusCode"),
+    )
+
+
+def get_status_description(track_result):
+    """
+    提取最新状态描述。
+    """
+    latest_status = track_result.get(
+        "latestStatusDetail",
+        {}
+    )
+
+    if not isinstance(latest_status, dict):
+        latest_status = {}
+
+    return first_non_empty(
+        latest_status.get("statusByLocale"),
+        latest_status.get("description"),
+        latest_status.get("status"),
+        latest_status.get("derivedCode"),
+        latest_status.get("code"),
+    )
+
+
+def is_delivered(track_result):
+    """
+    判断是否已经送达。
+
+    FedEx 常见送达状态代码：
+    DL = Delivered
+    """
+    status_code = get_status_code(
+        track_result
+    ).upper()
+
+    status_description = get_status_description(
+        track_result
+    ).upper()
+
+    delivered_codes = {
+        "DL",
+        "DELIVERED",
+    }
+
+    delivered_keywords = {
+        "DELIVERED",
+        "已送达",
+        "已签收",
+        "派送完成",
+    }
+
+    if status_code in delivered_codes:
+        return True
+
+    return any(
+        keyword in status_description
+        for keyword in delivered_keywords
+    )
+
+
+# ============================================================
+# 提取扫描时间和送达时间
+# ============================================================
+
+def get_scan_events(track_result):
+    """
+    返回 scanEvents 列表。
+    """
+    scan_events = track_result.get(
+        "scanEvents",
+        []
+    )
+
+    if not isinstance(scan_events, list):
+        return []
+
+    return [
+        item
+        for item in scan_events
+        if isinstance(item, dict)
+    ]
+
+
+def parse_datetime_value(value):
+    """
+    尝试将 FedEx 时间转换为 datetime，用于排序。
+
+    如果转换失败，返回 None。
+    """
+    text = safe_text(value)
+
+    if not text:
+        return None
+
+    try:
+        return datetime.fromisoformat(
+            text.replace("Z", "+00:00")
+        )
+    except ValueError:
+        return None
+
+
+def get_latest_scan_event(track_result):
+    """
+    获取时间最新的一条扫描事件。
+    """
+    scan_events = get_scan_events(track_result)
+
+    if not scan_events:
+        return {}
+
+    dated_events = []
+
+    for event in scan_events:
+
+        date_value = first_non_empty(
+            event.get("date"),
+            event.get("dateTime"),
+            event.get("timestamp"),
+        )
+
+        parsed_date = parse_datetime_value(
+            date_value
+        )
+
+        if parsed_date is not None:
+            dated_events.append(
+                (
+                    parsed_date,
+                    event,
+                )
+            )
+
+    if dated_events:
+        dated_events.sort(
+            key=lambda item: item[0],
+            reverse=True
+        )
+
+        return dated_events[0][1]
+
+    return scan_events[0]
+
+
+def get_latest_scan_time(track_result):
+    """
+    获取最新扫描时间。
+    """
+    latest_event = get_latest_scan_event(
+        track_result
+    )
+
+    return first_non_empty(
+        latest_event.get("date"),
+        latest_event.get("dateTime"),
+        latest_event.get("timestamp"),
+    )
+
+
+def get_latest_scan_description(track_result):
+    """
+    获取最新扫描事件描述。
+    """
+    latest_event = get_latest_scan_event(
+        track_result
+    )
+
+    return first_non_empty(
+        latest_event.get("eventDescription"),
+        latest_event.get("derivedStatus"),
+        latest_event.get("eventType"),
+    )
+
+
+def get_delivery_time(track_result):
+    """
+    提取实际送达时间。
+
+    优先级：
+    1. dateAndTimes 中的 ACTUAL_DELIVERY
+    2. scanEvents 中的 DL / Delivered
+    """
+    date_and_times = track_result.get(
+        "dateAndTimes",
+        []
+    )
+
+    if isinstance(date_and_times, list):
+
+        for item in date_and_times:
+
+            if not isinstance(item, dict):
+                continue
+
+            date_type = safe_text(
+                item.get("type")
+            ).upper()
+
+            if date_type in {
+                "ACTUAL_DELIVERY",
+                "ACTUAL_DELIVERY_DATE",
+                "DELIVERY",
+            }:
+                return first_non_empty(
+                    item.get("dateTime"),
+                    item.get("date"),
+                )
+
+    delivery_events = []
+
+    for event in get_scan_events(track_result):
+
+        event_type = safe_text(
+            event.get("eventType")
+        ).upper()
+
+        event_description = first_non_empty(
+            event.get("eventDescription"),
+            event.get("derivedStatus"),
+        ).upper()
+
+        event_is_delivery = (
+            event_type in {"DL", "DELIVERED"}
+            or "DELIVERED" in event_description
+            or "已送达" in event_description
+            or "已签收" in event_description
+        )
+
+        if not event_is_delivery:
+            continue
+
+        date_value = first_non_empty(
+            event.get("date"),
+            event.get("dateTime"),
+            event.get("timestamp"),
+        )
+
+        parsed_date = parse_datetime_value(
+            date_value
+        )
+
+        delivery_events.append(
+            (
+                parsed_date,
+                date_value,
+            )
+        )
+
+    valid_delivery_events = [
+        item
+        for item in delivery_events
+        if item[0] is not None
+    ]
+
+    if valid_delivery_events:
+
+        valid_delivery_events.sort(
+            key=lambda item: item[0],
+            reverse=True
+        )
+
+        return valid_delivery_events[0][1]
+
+    if delivery_events:
+        return delivery_events[0][1]
+
+    return ""
+
+
+# ============================================================
+# 提取地点
+# ============================================================
+
+def format_location(location):
+    """
+    将 FedEx 地址字典转换成简洁文字。
+    """
+    if not isinstance(location, dict):
+        return ""
+
+    address = location.get("locationContactAndAddress")
+
+    if isinstance(address, dict):
+        address = address.get("address", address)
+    else:
+        address = location.get("address", location)
+
+    if not isinstance(address, dict):
+        return ""
+
+    parts = [
+        safe_text(address.get("city")),
+        safe_text(address.get("stateOrProvinceCode")),
+        safe_text(address.get("postalCode")),
+        safe_text(address.get("countryCode")),
+    ]
+
+    return ", ".join(
+        part
+        for part in parts
+        if part
+    )
+
+
+def get_latest_location(track_result):
+    """
+    获取最新扫描地点。
+    """
+    latest_event = get_latest_scan_event(
+        track_result
+    )
+
+    scan_location = latest_event.get(
+        "scanLocation",
+        {}
+    )
+
+    if isinstance(scan_location, dict):
+        return format_location(
+            scan_location
+        )
+
+    return ""
+
+
+# ============================================================
+# 判断主单或子单
+# ============================================================
+
+def get_associated_type(track_result):
+    """
+    提取关联类型。
+    """
+    return first_non_empty(
+        track_result.get("associatedType"),
+        nested_get(
+            track_result,
+            "additionalTrackingInfo",
+            "associatedType"
+        ),
+        nested_get(
+            track_result,
+            "shipmentDetails",
+            "associatedType"
+        ),
+    )
+
+
+def determine_shipment_role(
+    tracking_number,
+    track_result,
+    master_tracking_number
+):
+    """
+    判断当前号码属于主单还是子单。
+
+    判断顺序：
+    1. 与手工指定的主单号比较
+    2. 检查 associatedType
+    3. 无法确认时标记为 CHILD_OR_UNKNOWN
+    """
+    normalized_master = normalize_tracking_number(
+        master_tracking_number
+    )
+
+    if (
+        normalized_master
+        and tracking_number == normalized_master
+    ):
+        return "MASTER"
+
+    associated_type = get_associated_type(
+        track_result
+    ).upper()
+
+    if "MASTER" in associated_type:
+        return "MASTER"
+
+    if (
+        "CHILD" in associated_type
+        or "ASSOCIATED" in associated_type
+        or "PIECE" in associated_type
+    ):
+        return "CHILD"
+
+    return "CHILD_OR_UNKNOWN"
+
+
+# ============================================================
+# 解析单条 trackResult
+# ============================================================
+
+def parse_track_result(
+    track_result,
+    master_tracking_number=""
+):
+    """
+    将一个 trackResult 转换为一行结果。
+    """
+    tracking_number = get_tracking_number(
+        track_result
+    )
+
+    if not tracking_number:
+        return None
+
+    status_code = get_status_code(
+        track_result
+    )
+
+    status_description = get_status_description(
+        track_result
+    )
+
+    role = determine_shipment_role(
+        tracking_number,
+        track_result,
+        master_tracking_number
+    )
+
+    return {
+        "运单号": tracking_number,
+        "类型": role,
+        "状态代码": status_code,
+        "最新状态": status_description,
+        "是否送达": is_delivered(track_result),
+        "送达时间": get_delivery_time(track_result),
+        "最后扫描时间": get_latest_scan_time(track_result),
+        "最后扫描描述": get_latest_scan_description(
+            track_result
+        ),
+        "最后扫描地点": get_latest_location(
+            track_result
+        ),
+        "关联类型": get_associated_type(
+            track_result
+        ),
+    }
+
+
+# ============================================================
+# 去重
+# ============================================================
+
+def deduplicate_records(records):
+    """
+    按运单号去重。
+
+    如果同一个运单号出现多次，优先保留：
+    1. 有最后扫描时间的数据
+    2. 已送达的数据
+    3. 后出现的数据
+    """
+    result_by_tracking_number = {}
+
+    for record in records:
+
+        tracking_number = record["运单号"]
+
+        if tracking_number not in result_by_tracking_number:
+            result_by_tracking_number[
+                tracking_number
+            ] = record
+            continue
+
+        old_record = result_by_tracking_number[
+            tracking_number
+        ]
+
+        old_time = parse_datetime_value(
+            old_record.get("最后扫描时间")
+        )
+
+        new_time = parse_datetime_value(
+            record.get("最后扫描时间")
+        )
+
+        should_replace = False
+
+        if new_time and old_time:
+            should_replace = new_time > old_time
+
+        elif new_time and not old_time:
+            should_replace = True
+
+        elif (
+            record.get("是否送达")
+            and not old_record.get("是否送达")
+        ):
+            should_replace = True
+
+        if should_replace:
+            result_by_tracking_number[
+                tracking_number
+            ] = record
+
+    return list(
+        result_by_tracking_number.values()
+    )
+
+
+# ============================================================
+# 生成汇总
+# ============================================================
+
+def build_summary(records):
+    """
+    计算总数和状态数量。
+    """
+    all_records = records
+
+    child_records = [
+        record
+        for record in records
+        if record["类型"] != "MASTER"
+    ]
+
+    delivered_records = [
+        record
+        for record in child_records
+        if record["是否送达"]
+    ]
+
+    undelivered_records = [
+        record
+        for record in child_records
+        if not record["是否送达"]
+    ]
+
+    status_counter = Counter(
+        first_non_empty(
+            record.get("最新状态"),
+            record.get("状态代码"),
+            "未知状态"
+        )
+        for record in child_records
+    )
+
+    summary = {
+        "全部运单数量": len(all_records),
+        "子单总数": len(child_records),
+        "已送达数量": len(delivered_records),
+        "未送达数量": len(undelivered_records),
+        "状态统计": status_counter,
+    }
+
+    return summary
+
+
+# ============================================================
+# 输出控制台结果
+# ============================================================
+
+def print_records(records, summary):
+    """
+    在控制台打印所有子单及最终统计。
+    """
+    child_records = [
+        record
+        for record in records
+        if record["类型"] != "MASTER"
+    ]
+
+    print()
+    print("=" * 100)
+    print("FedEx MPS 子单状态")
+    print("=" * 100)
+
+    if not child_records:
+        print("没有提取到子单记录。")
+
+    for index, record in enumerate(
+        child_records,
+        start=1
+    ):
+        print(
+            f"{index:>3}. "
+            f"子单号：{record['运单号']} | "
+            f"状态：{record['最新状态']} | "
+            f"代码：{record['状态代码']} | "
+            f"是否送达：{record['是否送达']} | "
+            f"送达时间：{record['送达时间'] or '-'}"
+        )
+
+    print()
+    print("=" * 100)
+    print("最终统计")
+    print("=" * 100)
+
+    print(
+        f"全部运单数量："
+        f"{summary['全部运单数量']}"
+    )
+
+    print(
+        f"子单总数："
+        f"{summary['子单总数']}"
+    )
+
+    print(
+        f"已送达数量："
+        f"{summary['已送达数量']}"
+    )
+
+    print(
+        f"未送达数量："
+        f"{summary['未送达数量']}"
+    )
+
+    print()
+    print("各状态数量：")
+
+    for status, count in (
+        summary["状态统计"].most_common()
+    ):
+        print(
+            f"  {status}: {count}"
+        )
+
+
+# ============================================================
+# 保存 Excel 和 CSV
+# ============================================================
+
+def save_results(records, summary):
+    """
+    保存详细结果和汇总结果。
+    """
+    detail_columns = [
+        "运单号",
+        "类型",
+        "状态代码",
+        "最新状态",
+        "是否送达",
+        "送达时间",
+        "最后扫描时间",
+        "最后扫描描述",
+        "最后扫描地点",
+        "关联类型",
+    ]
+
+    detail_df = pd.DataFrame(
+        records,
+        columns=detail_columns
+    )
+
+    if not detail_df.empty:
+        detail_df = detail_df.sort_values(
+            by=[
+                "类型",
+                "是否送达",
+                "运单号",
+            ],
+            ascending=[
+                True,
+                True,
+                True,
+            ]
+        )
+
+    summary_rows = [
+        {
+            "统计项目": "全部运单数量",
+            "数量": summary["全部运单数量"],
+        },
+        {
+            "统计项目": "子单总数",
+            "数量": summary["子单总数"],
+        },
+        {
+            "统计项目": "已送达数量",
+            "数量": summary["已送达数量"],
+        },
+        {
+            "统计项目": "未送达数量",
+            "数量": summary["未送达数量"],
+        },
+    ]
+
+    for status, count in (
+        summary["状态统计"].most_common()
+    ):
+        summary_rows.append(
+            {
+                "统计项目": f"状态：{status}",
+                "数量": count,
+            }
+        )
+
+    summary_df = pd.DataFrame(
+        summary_rows
+    )
+
+    detail_df.to_csv(
+        OUTPUT_CSV,
+        index=False,
+        encoding="utf-8-sig"
+    )
+
+    with pd.ExcelWriter(
+        OUTPUT_EXCEL,
+        engine="openpyxl"
+    ) as writer:
+
+        detail_df.to_excel(
+            writer,
+            sheet_name="子单明细",
+            index=False
+        )
+
+        summary_df.to_excel(
+            writer,
+            sheet_name="统计汇总",
+            index=False
+        )
+
+        workbook = writer.book
+
+        detail_sheet = workbook["子单明细"]
+        summary_sheet = workbook["统计汇总"]
+
+        detail_sheet.freeze_panes = "A2"
+        detail_sheet.auto_filter.ref = (
+            detail_sheet.dimensions
+        )
+
+        column_widths = {
+            "A": 20,
+            "B": 20,
+            "C": 14,
+            "D": 32,
+            "E": 12,
+            "F": 28,
+            "G": 28,
+            "H": 40,
+            "I": 32,
+            "J": 20,
+        }
+
+        for column, width in column_widths.items():
+            detail_sheet.column_dimensions[
+                column
+            ].width = width
+
+        summary_sheet.column_dimensions[
+            "A"
+        ].width = 45
+
+        summary_sheet.column_dimensions[
+            "B"
+        ].width = 15
+
+    print()
+    print(
+        f"Excel 已保存："
+        f"{os.path.abspath(OUTPUT_EXCEL)}"
+    )
+
+    print(
+        f"CSV 已保存："
+        f"{os.path.abspath(OUTPUT_CSV)}"
+    )
+
+
+# ============================================================
+# 主程序
+# ============================================================
+
+def main():
+    try:
+        print("=" * 100)
+        print("FedEx MPS 子单号及状态提取")
+        print("=" * 100)
+
+        print(
+            f"正在读取："
+            f"{os.path.abspath(JSON_FILE)}"
+        )
+
+        data = load_json(
+            JSON_FILE
+        )
+
+        track_results = find_track_results(
+            data
+        )
+
+        print(
+            f"JSON 中找到 "
+            f"{len(track_results)} 条 trackResult。"
+        )
+
+        if not track_results:
+            print()
+            print(
+                "没有找到 trackResults。"
+            )
+            print(
+                "请确认该文件是 FedEx "
+                "associated shipments API 的返回结果。"
+            )
+            return
+
+        detected_master_number = (
+            normalize_tracking_number(
+                MASTER_TRACKING_NUMBER
+            )
+        )
+
+        if not detected_master_number:
+
+            complete_results = (
+                find_complete_track_results(data)
+            )
+
+            requested_numbers = []
+
+            for complete_result in complete_results:
+
+                requested_number = (
+                    get_requested_tracking_number(
+                        complete_result
+                    )
+                )
+
+                if (
+                    requested_number
+                    and requested_number
+                    not in requested_numbers
+                ):
+                    requested_numbers.append(
+                        requested_number
+                    )
+
+            if len(requested_numbers) == 1:
+                detected_master_number = (
+                    requested_numbers[0]
+                )
+
+                print(
+                    f"检测到查询运单号："
+                    f"{detected_master_number}"
+                )
+
+        records = []
+
+        for track_result in track_results:
+
+            record = parse_track_result(
+                track_result,
+                master_tracking_number=(
+                    detected_master_number
+                )
+            )
+
+            if record is not None:
+                records.append(record)
+
+        records = deduplicate_records(
+            records
+        )
+
+        if not records:
+            print(
+                "trackResults 中没有找到有效运单号。"
+            )
+            return
+
+        summary = build_summary(
+            records
+        )
+
+        print_records(
+            records,
+            summary
+        )
+
+        save_results(
+            records,
+            summary
+        )
+
+        print()
+        print("处理完成。")
+
+    except FileNotFoundError as error:
+        print()
+        print(f"文件错误：{error}")
+
+    except json.JSONDecodeError as error:
+        print()
+        print(
+            f"JSON 格式错误："
+            f"第 {error.lineno} 行，"
+            f"第 {error.colno} 列。"
+        )
+        print(
+            f"错误内容：{error.msg}"
+        )
+
+    except PermissionError as error:
+        print()
+        print(f"文件权限错误：{error}")
+        print(
+            "如果输出 Excel 已经打开，"
+            "请先关闭 Excel 文件后重新运行。"
+        )
+
+    except Exception as error:
+        print()
+        print(
+            f"程序发生错误："
+            f"{type(error).__name__}: {error}"
+        )
+
+        import traceback
+        traceback.print_exc()
+
+
+if __name__ == "__main__":
+    main()
