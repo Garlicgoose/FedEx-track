@@ -1,0 +1,758 @@
+{
+  "transactionId": "e102bb8e-7a54-4dd9-a65d-5956d0cd1970",
+  "output": {
+    "completeTrackResults": [
+      {
+        "trackingNumber": "472887355535",
+        "trackResults": [
+          {
+            "trackingNumberInfo": {
+              "trackingNumber": "472887355535",
+              "trackingNumberUniqueId": "2461215000~472887355535~FX",
+              "carrierCode": "FDXE"
+            },
+            "additionalTrackingInfo": {
+              "nickname": "",
+              "packageIdentifiers": [
+                {
+                  "type": "STANDARD_MPS",
+                  "values": [
+                    "472887355535"
+                  ],
+                  "trackingNumberUniqueId": "2461215000",
+                  "carrierCode": ""
+                },
+                {
+                  "type": "SHIPPER_REFERENCE",
+                  "values": [
+                    "Molex Shipment;9896547/POUS65398563"
+                  ],
+                  "trackingNumberUniqueId": "",
+                  "carrierCode": ""
+                }
+              ],
+              "hasAssociatedShipments": true
+            },
+            "shipperInformation": {
+              "contact": {},
+              "address": {
+                "city": "MACAU ISLAND",
+                "countryCode": "MO",
+                "residential": false,
+                "countryName": "Macau SAR, China"
+              }
+            },
+            "recipientInformation": {
+              "contact": {},
+              "address": {
+                "city": "LOCKBOURNE",
+                "stateOrProvinceCode": "OH",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "latestStatusDetail": {
+              "code": "DL",
+              "derivedCode": "DL",
+              "statusByLocale": "Delivered",
+              "description": "Delivered",
+              "scanLocation": {
+                "city": "COLUMBUS",
+                "stateOrProvinceCode": "OH",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "dateAndTimes": [
+              {
+                "type": "ACTUAL_DELIVERY",
+                "dateTime": "2026-07-16T11:41:00-04:00"
+              },
+              {
+                "type": "ACTUAL_PICKUP",
+                "dateTime": "2026-06-23T17:15:00+08:00"
+              },
+              {
+                "type": "SHIP",
+                "dateTime": "2026-06-23T00:00:00+00:00"
+              },
+              {
+                "type": "ACTUAL_TENDER",
+                "dateTime": "2026-06-23T17:31:00+08:00"
+              }
+            ],
+            "availableImages": [
+              {
+                "type": "SIGNATURE_PROOF_OF_DELIVERY"
+              }
+            ],
+            "specialHandlings": [
+              {
+                "type": "DELIVER_WEEKDAY",
+                "description": "Deliver Weekday",
+                "paymentType": "OTHER"
+              }
+            ],
+            "packageDetails": {
+              "packagingDescription": {
+                "type": "YOUR_PACKAGING",
+                "description": "Your Packaging"
+              },
+              "sequenceNumber": "1",
+              "count": "5",
+              "weightAndDimensions": {
+                "weight": [
+                  {
+                    "value": "233.7",
+                    "unit": "KG"
+                  },
+                  {
+                    "value": "515.22",
+                    "unit": "LB"
+                  }
+                ],
+                "dimensions": [
+                  {
+                    "length": 73,
+                    "width": 63,
+                    "height": 72,
+                    "units": "CM"
+                  },
+                  {
+                    "length": 28,
+                    "width": 24,
+                    "height": 28,
+                    "units": "IN"
+                  }
+                ]
+              },
+              "packageContent": []
+            },
+            "shipmentDetails": {
+              "possessionStatus": true,
+              "weight": [
+                {
+                  "value": "1168.5",
+                  "unit": "KG"
+                },
+                {
+                  "value": "2576.1",
+                  "unit": "LB"
+                }
+              ]
+            },
+            "scanEvents": [
+              {
+                "date": "2026-07-16T11:41:00-04:00",
+                "eventType": "DL",
+                "eventDescription": "Delivered",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "COLUMBUS",
+                  "stateOrProvinceCode": "OH",
+                  "postalCode": "43217",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "LCKRT",
+                "locationType": "DELIVERY_LOCATION",
+                "derivedStatusCode": "DL",
+                "derivedStatus": "Delivered"
+              },
+              {
+                "date": "2026-07-16T11:22:00-04:00",
+                "eventType": "AR",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "COLUMBUS",
+                  "stateOrProvinceCode": "OH",
+                  "postalCode": "43217",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "LCKRT",
+                "locationType": "DESTINATION_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-29T09:04:00-04:00",
+                "eventType": "DE",
+                "eventDescription": "Delivery exception",
+                "exceptionCode": "07",
+                "exceptionDescription": "Delivery was refused by the recipient",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "COLUMBUS",
+                  "stateOrProvinceCode": "OH",
+                  "postalCode": "43217",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "LCKRT",
+                "locationType": "DELIVERY_LOCATION",
+                "derivedStatusCode": "DE",
+                "derivedStatus": "Delivery exception"
+              },
+              {
+                "date": "2026-06-29T02:27:00-04:00",
+                "eventType": "AR",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "COLUMBUS",
+                  "stateOrProvinceCode": "OH",
+                  "postalCode": "43217",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "LCKRT",
+                "locationType": "DESTINATION_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-27T08:21:00-04:00",
+                "eventType": "AR",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "COLUMBUS",
+                  "stateOrProvinceCode": "OH",
+                  "postalCode": "43217",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "LCKRT",
+                "locationType": "DESTINATION_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-26T20:54:00-04:00",
+                "eventType": "AR",
+                "eventDescription": "At destination sort facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "COLUMBUS",
+                  "stateOrProvinceCode": "OH",
+                  "postalCode": "43217",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "LCKR",
+                "locationType": "SORT_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-26T17:30:00-04:00",
+                "eventType": "DP",
+                "eventDescription": "Departed FedEx hub",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "INDIANAPOLIS",
+                  "stateOrProvinceCode": "IN",
+                  "postalCode": "46241",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "INDH",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-26T04:37:00-04:00",
+                "eventType": "CC",
+                "eventDescription": "International shipment release - Import",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "INDIANAPOLIS",
+                  "stateOrProvinceCode": "IN",
+                  "postalCode": "46241",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "INDIP",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-26T04:37:00-04:00",
+                "eventType": "IT",
+                "eventDescription": "On the way",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "INDIANAPOLIS",
+                  "stateOrProvinceCode": "IN",
+                  "postalCode": "46241",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "INDHU",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-26T02:52:00-04:00",
+                "eventType": "CC",
+                "eventDescription": "International shipment release - Import",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "INDIANAPOLIS",
+                  "stateOrProvinceCode": "IN",
+                  "postalCode": "46241",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "INDIP",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-26T01:43:00-04:00",
+                "eventType": "AR",
+                "eventDescription": "Arrived at FedEx hub",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "INDIANAPOLIS",
+                  "stateOrProvinceCode": "IN",
+                  "postalCode": "46241",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "INDH",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-25T15:57:00-08:00",
+                "eventType": "DP",
+                "eventDescription": "Departed FedEx hub",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "ANCHORAGE",
+                  "stateOrProvinceCode": "AK",
+                  "postalCode": "99502",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "ANCR",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-25T03:22:00-08:00",
+                "eventType": "IT",
+                "eventDescription": "On the way",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "ANCHORAGE",
+                  "stateOrProvinceCode": "AK",
+                  "postalCode": "99507",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "ANCI",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-25T03:21:00-08:00",
+                "eventType": "AF",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "ANCHORAGE",
+                  "stateOrProvinceCode": "AK",
+                  "postalCode": "99507",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "ANCI",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-25T00:23:00-08:00",
+                "eventType": "AR",
+                "eventDescription": "Arrived at FedEx hub",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "ANCHORAGE",
+                  "stateOrProvinceCode": "AK",
+                  "postalCode": "99502",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "ANCR",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-25T09:12:00+08:00",
+                "eventType": "IT",
+                "eventDescription": "On the way",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "GUANGZHOU",
+                  "postalCode": "510890",
+                  "countryCode": "CN",
+                  "residential": false,
+                  "countryName": "China"
+                },
+                "locationId": "CANH",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-25T06:21:00+08:00",
+                "eventType": "DP",
+                "eventDescription": "Departed FedEx hub",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "GUANGZHOU",
+                  "postalCode": "510890",
+                  "countryCode": "CN",
+                  "residential": false,
+                  "countryName": "China"
+                },
+                "locationId": "CANH",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-24T19:50:00+08:00",
+                "eventType": "AR",
+                "eventDescription": "Arrived at FedEx hub",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "GUANGZHOU",
+                  "postalCode": "510890",
+                  "countryCode": "CN",
+                  "residential": false,
+                  "countryName": "China"
+                },
+                "locationId": "CANH",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-24T16:35:00+08:00",
+                "eventType": "IT",
+                "eventDescription": "On the way",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "LANTAU ISLAND",
+                  "postalCode": "99999",
+                  "countryCode": "HK",
+                  "residential": false,
+                  "countryName": "Hong Kong SAR, China"
+                },
+                "locationId": "HKGIP",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-23T21:40:00+08:00",
+                "eventType": "AF",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "CHEK LAP KOK",
+                  "postalCode": "300",
+                  "countryCode": "HK",
+                  "residential": false,
+                  "countryName": "Hong Kong SAR, China"
+                },
+                "locationId": "HKGRT",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-23T18:52:00+08:00",
+                "eventType": "IT",
+                "eventDescription": "On the way",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "LANTAU ISLAND",
+                  "postalCode": "99999",
+                  "countryCode": "HK",
+                  "residential": false,
+                  "countryName": "Hong Kong SAR, China"
+                },
+                "locationId": "HKGIP",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-23T17:56:00+08:00",
+                "eventType": "DP",
+                "eventDescription": "Left FedEx origin facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "MACAU ISLAND",
+                  "postalCode": "99999",
+                  "countryCode": "MO",
+                  "residential": false,
+                  "countryName": "Macau SAR, China"
+                },
+                "locationId": "MFMA",
+                "locationType": "ORIGIN_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-06-23T17:15:00+08:00",
+                "eventType": "PU",
+                "eventDescription": "Picked up",
+                "exceptionCode": "17",
+                "exceptionDescription": "Future delivery requested",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "MACAU ISLAND",
+                  "postalCode": "99999",
+                  "countryCode": "MO",
+                  "residential": false,
+                  "countryName": "Macau SAR, China"
+                },
+                "locationId": "MFMA",
+                "locationType": "PICKUP_LOCATION",
+                "derivedStatusCode": "PU",
+                "derivedStatus": "Picked up"
+              },
+              {
+                "date": "2026-06-22T22:17:01-05:00",
+                "eventType": "OC",
+                "eventDescription": "Shipment information sent to FedEx",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "residential": false
+                },
+                "locationType": "CUSTOMER",
+                "derivedStatusCode": "IN",
+                "derivedStatus": "Label created"
+              }
+            ],
+            "availableNotifications": [
+              "ON_DELIVERY"
+            ],
+            "deliveryDetails": {
+              "actualDeliveryAddress": {
+                "city": "COLUMBUS",
+                "stateOrProvinceCode": "OH",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              },
+              "locationType": "FEDEX_LOCATION",
+              "locationDescription": "FedEx Location",
+              "deliveryAttempts": "0",
+              "receivedByName": "V.SABCHEV",
+              "deliveryOptionEligibilityDetails": [
+                {
+                  "option": "INDIRECT_SIGNATURE_RELEASE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REDIRECT_TO_HOLD_AT_LOCATION",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REROUTE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RESCHEDULE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RETURN_TO_SHIPPER",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "DISPUTE_DELIVERY",
+                  "eligibility": "POSSIBLY_ELIGIBLE"
+                },
+                {
+                  "option": "SUPPLEMENT_ADDRESS",
+                  "eligibility": "INELIGIBLE"
+                }
+              ]
+            },
+            "originLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "MACAU ISLAND",
+                  "countryCode": "MO",
+                  "residential": false,
+                  "countryName": "Macau SAR, China"
+                }
+              },
+              "locationId": "MFMA"
+            },
+            "destinationLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "LOCKBOURNE",
+                  "stateOrProvinceCode": "OH",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                }
+              },
+              "locationType": ""
+            },
+            "lastUpdatedDestinationAddress": {
+              "city": "LOCKBOURNE",
+              "stateOrProvinceCode": "OH",
+              "countryCode": "US",
+              "residential": false,
+              "countryName": "United States"
+            },
+            "serviceDetail": {
+              "type": "INTERNATIONAL_PRIORITY_FREIGHT",
+              "description": "FedEx International Priority Freight",
+              "shortDescription": "IPFS"
+            },
+            "standardTransitTimeWindow": {
+              "window": {
+                "ends": "2026-06-29T12:00:00-04:00"
+              }
+            },
+            "estimatedDeliveryTimeWindow": {
+              "window": {}
+            },
+            "goodsClassificationCode": "",
+            "returnDetail": {}
+          }
+        ]
+      }
+    ]
+  }
+}
