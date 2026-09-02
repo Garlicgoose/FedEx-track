@@ -1,0 +1,642 @@
+#534047231174 的json文件
+
+{
+  "transactionId": "18c68f1b-4116-4491-95f6-15d7ee99ae04",
+  "output": {
+    "completeTrackResults": [
+      {
+        "trackingNumber": "534047248114",
+        "trackResults": [
+          {
+            "trackingNumberInfo": {
+              "trackingNumber": "534047248114",
+              "trackingNumberUniqueId": "2461272000~534047248114~FX",
+              "carrierCode": "FDXE"
+            },
+            "additionalTrackingInfo": {
+              "nickname": "",
+              "packageIdentifiers": [
+                {
+                  "type": "STANDARD_MPS",
+                  "values": [
+                    "534047248114"
+                  ],
+                  "trackingNumberUniqueId": "2461272000",
+                  "carrierCode": ""
+                },
+                {
+                  "type": "SHIPPER_REFERENCE",
+                  "values": [
+                    "ID:9999998 PO#1433890"
+                  ],
+                  "trackingNumberUniqueId": "",
+                  "carrierCode": ""
+                }
+              ],
+              "hasAssociatedShipments": true
+            },
+            "shipperInformation": {
+              "contact": {},
+              "address": {
+                "city": "MACAU ISLAND",
+                "countryCode": "MO",
+                "residential": false,
+                "countryName": "Macau SAR, China"
+              }
+            },
+            "recipientInformation": {
+              "contact": {},
+              "address": {
+                "city": "NEW TAIPEI CITY",
+                "countryCode": "TW",
+                "residential": false,
+                "countryName": "Taiwan, China"
+              }
+            },
+            "latestStatusDetail": {
+              "code": "DL",
+              "derivedCode": "DL",
+              "statusByLocale": "Delivered",
+              "description": "Delivered",
+              "scanLocation": {
+                "city": "NEW TAIPEI CITY",
+                "countryCode": "TW",
+                "residential": false,
+                "countryName": "Taiwan, China"
+              }
+            },
+            "dateAndTimes": [
+              {
+                "type": "ACTUAL_DELIVERY",
+                "dateTime": "2026-08-26T09:06:00+08:00"
+              },
+              {
+                "type": "ACTUAL_PICKUP",
+                "dateTime": "2026-08-20T17:30:00+08:00"
+              },
+              {
+                "type": "SHIP",
+                "dateTime": "2026-08-20T00:00:00+00:00"
+              },
+              {
+                "type": "ACTUAL_TENDER",
+                "dateTime": "2026-08-20T17:30:00+08:00"
+              }
+            ],
+            "availableImages": [],
+            "specialHandlings": [
+              {
+                "type": "DELIVER_WEEKDAY",
+                "description": "Deliver Weekday",
+                "paymentType": "OTHER"
+              }
+            ],
+            "packageDetails": {
+              "packagingDescription": {
+                "type": "YOUR_PACKAGING",
+                "description": "Your Packaging"
+              },
+              "sequenceNumber": "1",
+              "count": "290",
+              "weightAndDimensions": {
+                "dimensions": [
+                  {
+                    "length": 50,
+                    "width": 36,
+                    "height": 34,
+                    "units": "CM"
+                  },
+                  {
+                    "length": 19,
+                    "width": 14,
+                    "height": 13,
+                    "units": "IN"
+                  }
+                ]
+              },
+              "packageContent": []
+            },
+            "shipmentDetails": {
+              "possessionStatus": true,
+              "weight": [
+                {
+                  "value": "5.3",
+                  "unit": "KG"
+                },
+                {
+                  "value": "11.68",
+                  "unit": "LB"
+                }
+              ]
+            },
+            "scanEvents": [
+              {
+                "date": "2026-08-26T09:06:00+08:00",
+                "eventType": "DL",
+                "eventDescription": "Delivered",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "NEW TAIPEI CITY",
+                  "postalCode": "23145",
+                  "countryCode": "TW",
+                  "residential": false,
+                  "countryName": "Taiwan, China"
+                },
+                "locationId": "TPEA",
+                "locationType": "DELIVERY_LOCATION",
+                "derivedStatusCode": "DL",
+                "derivedStatus": "Delivered"
+              },
+              {
+                "date": "2026-08-26T08:12:00+08:00",
+                "eventType": "OD",
+                "eventDescription": "On FedEx vehicle for delivery",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "PAN CHIAO DISTRICT",
+                  "postalCode": "22065",
+                  "countryCode": "TW",
+                  "residential": false,
+                  "countryName": "Taiwan, China"
+                },
+                "locationId": "TPEA",
+                "locationType": "VEHICLE",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-25T10:27:00+08:00",
+                "eventType": "AR",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "PAN CHIAO DISTRICT",
+                  "postalCode": "22065",
+                  "countryCode": "TW",
+                  "residential": false,
+                  "countryName": "Taiwan, China"
+                },
+                "locationId": "TPEA",
+                "locationType": "DESTINATION_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-25T10:27:00+08:00",
+                "eventType": "AR",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "41",
+                "exceptionDescription": "Your package is expected to arrive on the scheduled delivery date",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "PAN CHIAO DISTRICT",
+                  "postalCode": "22065",
+                  "countryCode": "TW",
+                  "residential": false,
+                  "countryName": "Taiwan, China"
+                },
+                "locationId": "TPEA",
+                "locationType": "DESTINATION_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-24T14:28:00+08:00",
+                "eventType": "AR",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "PAN CHIAO DISTRICT",
+                  "postalCode": "22065",
+                  "countryCode": "TW",
+                  "residential": false,
+                  "countryName": "Taiwan, China"
+                },
+                "locationId": "TPEA",
+                "locationType": "DESTINATION_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-24T14:28:00+08:00",
+                "eventType": "AR",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "41",
+                "exceptionDescription": "Your package is expected to arrive on the scheduled delivery date",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "PAN CHIAO DISTRICT",
+                  "postalCode": "22065",
+                  "countryCode": "TW",
+                  "residential": false,
+                  "countryName": "Taiwan, China"
+                },
+                "locationId": "TPEA",
+                "locationType": "DESTINATION_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-24T14:28:00+08:00",
+                "eventType": "AR",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "PAN CHIAO DISTRICT",
+                  "postalCode": "22065",
+                  "countryCode": "TW",
+                  "residential": false,
+                  "countryName": "Taiwan, China"
+                },
+                "locationId": "TPEA",
+                "locationType": "DESTINATION_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-24T09:10:00+08:00",
+                "eventType": "IT",
+                "eventDescription": "On the way",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "TA YUAN HSIANG",
+                  "postalCode": "337",
+                  "countryCode": "TW",
+                  "residential": false,
+                  "countryName": "Taiwan, China"
+                },
+                "locationId": "TPESH",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-24T09:05:00+08:00",
+                "eventType": "IT",
+                "eventDescription": "On the way",
+                "exceptionCode": "71",
+                "exceptionDescription": "Package available for clearance",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "TA YUAN HSIANG",
+                  "postalCode": "337",
+                  "countryCode": "TW",
+                  "residential": false,
+                  "countryName": "Taiwan, China"
+                },
+                "locationId": "TPEIP",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-24T09:05:00+08:00",
+                "eventType": "CC",
+                "eventDescription": "International shipment release - Import",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "TA YUAN HSIANG",
+                  "postalCode": "337",
+                  "countryCode": "TW",
+                  "residential": false,
+                  "countryName": "Taiwan, China"
+                },
+                "locationId": "TPEIP",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-24T07:15:00+08:00",
+                "eventType": "AR",
+                "eventDescription": "At destination sort facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "TA YUAN DISTRICT",
+                  "postalCode": "337",
+                  "countryCode": "TW",
+                  "residential": false,
+                  "countryName": "Taiwan, China"
+                },
+                "locationId": "TPERT",
+                "locationType": "SORT_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-24T05:30:00+08:00",
+                "eventType": "IT",
+                "eventDescription": "On the way",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "ANGELES CITY",
+                  "postalCode": "2023",
+                  "countryCode": "PH",
+                  "residential": false,
+                  "countryName": "Philippines"
+                },
+                "locationId": "CRKRT",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-24T02:23:00+08:00",
+                "eventType": "DP",
+                "eventDescription": "Departed FedEx hub",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "GUANGZHOU",
+                  "postalCode": "510890",
+                  "countryCode": "CN",
+                  "residential": false,
+                  "countryName": "China"
+                },
+                "locationId": "CANH",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-23T06:49:00+08:00",
+                "eventType": "IT",
+                "eventDescription": "On the way",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "GUANGZHOU",
+                  "postalCode": "510890",
+                  "countryCode": "CN",
+                  "residential": false,
+                  "countryName": "China"
+                },
+                "locationId": "CANH",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-22T05:57:00+08:00",
+                "eventType": "IT",
+                "eventDescription": "On the way",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "GUANGZHOU",
+                  "postalCode": "510890",
+                  "countryCode": "CN",
+                  "residential": false,
+                  "countryName": "China"
+                },
+                "locationId": "CANH",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-21T20:32:00+08:00",
+                "eventType": "AR",
+                "eventDescription": "Arrived at FedEx hub",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "GUANGZHOU",
+                  "postalCode": "510890",
+                  "countryCode": "CN",
+                  "residential": false,
+                  "countryName": "China"
+                },
+                "locationId": "CANH",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-21T16:45:00+08:00",
+                "eventType": "IT",
+                "eventDescription": "On the way",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "LANTAU ISLAND",
+                  "postalCode": "99999",
+                  "countryCode": "HK",
+                  "residential": false,
+                  "countryName": "Hong Kong SAR, China"
+                },
+                "locationId": "HKGIP",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-20T19:45:00+08:00",
+                "eventType": "DP",
+                "eventDescription": "Left FedEx origin facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "MACAU ISLAND",
+                  "postalCode": "99999",
+                  "countryCode": "MO",
+                  "residential": false,
+                  "countryName": "Macau SAR, China"
+                },
+                "locationId": "MFMA",
+                "locationType": "ORIGIN_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2026-08-20T17:44:00+08:00",
+                "eventType": "PU",
+                "eventDescription": "Picked up",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "city": "MACAU ISLAND",
+                  "postalCode": "99999",
+                  "countryCode": "MO",
+                  "residential": false,
+                  "countryName": "Macau SAR, China"
+                },
+                "locationId": "MFMA",
+                "locationType": "PICKUP_LOCATION",
+                "derivedStatusCode": "PU",
+                "derivedStatus": "Picked up"
+              },
+              {
+                "date": "2026-08-19T00:23:14-05:00",
+                "eventType": "OC",
+                "eventDescription": "Shipment information sent to FedEx",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [
+                    ""
+                  ],
+                  "residential": false
+                },
+                "locationType": "CUSTOMER",
+                "derivedStatusCode": "IN",
+                "derivedStatus": "Label created"
+              }
+            ],
+            "availableNotifications": [
+              "ON_DELIVERY"
+            ],
+            "deliveryDetails": {
+              "actualDeliveryAddress": {
+                "city": "NEW TAIPEI CITY",
+                "countryCode": "TW",
+                "residential": false,
+                "countryName": "Taiwan, China"
+              },
+              "locationType": "RECEPTIONIST_OR_FRONT_DESK",
+              "locationDescription": "Receptionist/Front Desk",
+              "deliveryAttempts": "0",
+              "receivedByName": "R.FANG",
+              "deliveryOptionEligibilityDetails": [
+                {
+                  "option": "INDIRECT_SIGNATURE_RELEASE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REDIRECT_TO_HOLD_AT_LOCATION",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REROUTE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RESCHEDULE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RETURN_TO_SHIPPER",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "DISPUTE_DELIVERY",
+                  "eligibility": "POSSIBLY_ELIGIBLE"
+                },
+                {
+                  "option": "SUPPLEMENT_ADDRESS",
+                  "eligibility": "INELIGIBLE"
+                }
+              ]
+            },
+            "originLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "MACAU ISLAND",
+                  "countryCode": "MO",
+                  "residential": false,
+                  "countryName": "Macau SAR, China"
+                }
+              },
+              "locationId": "MFMA"
+            },
+            "destinationLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "NEW TAIPEI CITY",
+                  "countryCode": "TW",
+                  "residential": false,
+                  "countryName": "Taiwan, China"
+                }
+              },
+              "locationType": ""
+            },
+            "lastUpdatedDestinationAddress": {
+              "city": "NEW TAIPEI CITY",
+              "countryCode": "TW",
+              "residential": false,
+              "countryName": "Taiwan, China"
+            },
+            "serviceDetail": {
+              "type": "INTERNATIONAL_ECONOMY",
+              "description": "FedEx International Economy",
+              "shortDescription": "IE"
+            },
+            "standardTransitTimeWindow": {
+              "window": {
+                "ends": "2026-08-26T18:00:00+08:00"
+              }
+            },
+            "estimatedDeliveryTimeWindow": {
+              "window": {}
+            },
+            "goodsClassificationCode": "",
+            "returnDetail": {}
+          }
+        ]
+      }
+    ]
+  }
+}

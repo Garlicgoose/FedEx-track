@@ -1,0 +1,1234 @@
+# 对于简单的运单进行查询,会出现一些问题,即子单未送达,但是算是delivered
+
+import os
+import re
+import time
+import base64
+from datetime import datetime
+from pathlib import Path
+
+import requests
+from openpyxl import load_workbook, Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
+
+
+# ============================================================
+# 1. 可修改配置
+# ============================================================
+
+CLIENT_ID = "l726270ca1e3e14d2092057988b4aee3db"
+
+CLIENT_SECRET = "ea3249b6848d41ddae192a8111e4afd0"
+
+ACCOUNT_NUMBER = "791310059"
+
+# 输入Excel
+# 第1列：货代名称
+# 第2列：运单号
+INPUT_EXCEL = Path(
+    r"C:\Users\pengj8\OneDrive - kochind.com\Desktop\folder\track\track.xlsx"
+)
+
+# 输出Excel，仅记录确认已经送达的FedEx运单
+OUTPUT_EXCEL = Path(
+    r"C:\Users\pengj8\OneDrive - kochind.com\Desktop\folder\track\FedEx_Delivered_Result.xlsx"
+)
+
+# POD保存目录
+POD_FOLDER = Path(
+    r"C:\Users\pengj8\OneDrive - kochind.com\Desktop\folder\track\pdf\FedEx"
+)
+
+# 输入Excel工作表名称
+# 设置为None时使用第一个工作表
+INPUT_SHEET_NAME = None
+
+# 输入Excel是否有标题行
+# 如果第一行是 Carrier、AWB#，保持为True
+HAS_HEADER = True
+
+# API环境
+# 正式环境：https://apis.fedex.com
+# 沙盒环境：https://apis-sandbox.fedex.com
+FEDEX_BASE_URL = "https://apis.fedex.com"
+
+# 请求语言
+LOCALE = "en_US"
+
+# 每次API请求之间的间隔，避免短时间请求过多
+REQUEST_INTERVAL_SECONDS = 0.3
+
+# 请求超时时间
+REQUEST_TIMEOUT_SECONDS = 60
+
+# 网络失败重试次数
+MAX_RETRIES = 3
+
+# 是否在POD已经存在时覆盖
+OVERWRITE_EXISTING_POD = False
+
+# 是否输出调试信息
+DEBUG = True
+
+
+
+
+# ============================================================
+# 3. 通用工具函数
+# ============================================================
+
+def safe_print(message):
+    """普通控制台输出。"""
+    print(message, flush=True)
+
+
+def clean_tracking_number(value):
+    """
+    清理Excel中的运单号。
+
+    处理以下情况：
+    1. Excel将运单号识别为整数
+    2. Excel将运单号识别为534047240168.0
+    3. 运单号中存在空格、短横线
+    """
+
+    if value is None:
+        return ""
+
+    if isinstance(value, int):
+        return str(value)
+
+    if isinstance(value, float):
+        if value.is_integer():
+            return str(int(value))
+        return str(value).strip()
+
+    text = str(value).strip()
+
+    if text.endswith(".0"):
+        possible_number = text[:-2]
+        if possible_number.isdigit():
+            text = possible_number
+
+    # 删除空格和短横线，只保留字母和数字
+    text = re.sub(r"[\s\-]+", "", text)
+
+    return text
+
+
+def is_fedex_carrier(value):
+    """
+    判断货代名称是否包含FedEx。
+
+    支持：
+    FedEx
+    FED-EX
+    FEDEX
+    FedEx Logistics
+    Federal Express
+    """
+
+    if value is None:
+        return False
+
+    carrier = str(value).strip().lower()
+
+    normalized = re.sub(r"[\s\-_]+", "", carrier)
+
+    return (
+        "fedex" in normalized
+        or "federalexpress" in normalized
+    )
+
+
+def parse_iso_datetime(value):
+    """
+    解析FedEx返回的ISO时间。
+
+    示例：
+    2026-08-17T11:40:00+08:00
+    2026-08-17T03:40:00Z
+    """
+
+    if not value:
+        return None
+
+    value = str(value).strip()
+
+    try:
+        if value.endswith("Z"):
+            value = value[:-1] + "+00:00"
+
+        return datetime.fromisoformat(value)
+
+    except ValueError:
+        return None
+
+
+def format_delivery_time(value):
+    """输出Excel中使用的送达时间格式。"""
+
+    delivery_datetime = parse_iso_datetime(value)
+
+    if delivery_datetime is None:
+        return value or ""
+
+    return delivery_datetime.strftime("%Y-%m-%d")
+
+
+def extract_error_message(response):
+    """从FedEx错误响应中提取可读信息。"""
+
+    try:
+        error_data = response.json()
+    except ValueError:
+        return response.text.strip() or f"HTTP {response.status_code}"
+
+    messages = []
+
+    for error_item in error_data.get("errors", []):
+        code = error_item.get("code", "")
+        message = error_item.get("message", "")
+
+        if code and message:
+            messages.append(f"{code}: {message}")
+        elif message:
+            messages.append(message)
+        elif code:
+            messages.append(code)
+
+    if messages:
+        return " | ".join(messages)
+
+    return str(error_data)
+
+
+# ============================================================
+# 4. FedEx OAuth Token
+# ============================================================
+
+def get_fedex_token(session):
+
+    token_url = (
+        f"{FEDEX_BASE_URL}/oauth/token"
+    )
+
+    payload = {
+        "grant_type": "client_credentials",
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET
+    }
+
+    response = session.post(
+        token_url,
+        data=payload
+    )
+
+    response.raise_for_status()
+
+    token = response.json()[
+        "access_token"
+    ]
+
+    return token
+
+
+# ============================================================
+# 5. FedEx Track API
+# ============================================================
+
+def query_tracking(session, token, tracking_number):
+    """
+    查询FedEx运单状态。
+
+    返回FedEx完整JSON。
+    """
+
+    url = f"{FEDEX_BASE_URL}/track/v1/trackingnumbers"
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-locale": LOCALE,
+        "Authorization": f"Bearer {token}",
+    }
+
+    payload = {
+        "includeDetailedScans": True,
+        "trackingInfo": [
+            {
+                "trackingNumberInfo": {
+                    "trackingNumber": tracking_number
+                },
+
+                # 新增
+                "associatedType": "STANDARD_MPS"
+            }
+        ]
+    }
+
+
+    last_error = None
+
+    for attempt in range(1, MAX_RETRIES + 1):
+
+        try:
+            response = session.post(
+                url,
+                headers=headers,
+                json=payload,
+                timeout=REQUEST_TIMEOUT_SECONDS,
+            )
+
+            if response.status_code == 200:
+
+                data = response.json()
+
+                import json
+
+                with open(
+                    f"{tracking_number}.json",
+                    "w",
+                    encoding="utf-8"
+                ) as f:
+
+                    json.dump(
+                        data,
+                        f,
+                        indent=2,
+                        ensure_ascii=False
+                    )
+
+                print(f"已保存 {tracking_number}.json")
+
+                return data
+
+
+
+            error_message = extract_error_message(response)
+
+            # 400通常说明输入、状态或业务条件不满足
+            # 这种情况重试一般无效
+            if response.status_code == 400:
+                raise RuntimeError(
+                    f"查询失败，HTTP 400：{error_message}"
+                )
+
+            # Token失效
+            if response.status_code == 401:
+                raise PermissionError(
+                    f"Token无效或已过期：{error_message}"
+                )
+
+            # 权限问题
+            if response.status_code == 403:
+                raise PermissionError(
+                    f"API权限不足：{error_message}"
+                )
+
+            last_error = RuntimeError(
+                f"HTTP {response.status_code}：{error_message}"
+            )
+
+        except requests.RequestException as exc:
+            last_error = exc
+
+        if attempt < MAX_RETRIES:
+            wait_seconds = attempt * 2
+
+            safe_print(
+                f"  查询失败，{wait_seconds}秒后重试 "
+                f"({attempt}/{MAX_RETRIES})"
+            )
+
+            time.sleep(wait_seconds)
+
+    raise RuntimeError(
+        f"查询运单 {tracking_number} 失败：{last_error}"
+    )
+
+
+def get_track_results(track_response):
+    """
+    从FedEx返回数据提取trackResults。
+
+    返回所有查到的包裹结果。
+    """
+
+    output = track_response.get("output", {})
+
+    complete_results = output.get(
+        "completeTrackResults",
+        []
+    )
+
+    track_results = []
+
+    for complete_item in complete_results:
+        current_results = complete_item.get(
+            "trackResults",
+            []
+        )
+
+        if isinstance(current_results, list):
+            track_results.extend(current_results)
+
+    return track_results
+
+
+def get_status_code(track_result):
+    """获取主要状态代码。"""
+
+    latest_status = track_result.get(
+        "latestStatusDetail",
+        {}
+    )
+
+    return (
+        latest_status.get("derivedCode")
+        or latest_status.get("code")
+        or ""
+    ).upper()
+
+
+def get_status_description(track_result):
+    """获取状态描述。"""
+
+    latest_status = track_result.get(
+        "latestStatusDetail",
+        {}
+    )
+
+    return (
+        latest_status.get("statusByLocale")
+        or latest_status.get("description")
+        or ""
+    )
+
+
+def is_track_result_delivered(track_result):
+    """判断单个trackResult是否已送达。"""
+
+    latest_status = track_result.get(
+        "latestStatusDetail",
+        {}
+    )
+
+    code = str(
+        latest_status.get("code", "")
+    ).upper()
+
+    derived_code = str(
+        latest_status.get("derivedCode", "")
+    ).upper()
+
+    status_text = str(
+        latest_status.get("statusByLocale", "")
+    ).strip().lower()
+
+    description = str(
+        latest_status.get("description", "")
+    ).strip().lower()
+
+    return (
+        code == "DL"
+        or derived_code == "DL"
+        or status_text == "delivered"
+        or description == "delivered"
+    )
+
+
+def shipment_is_fully_delivered(track_results):
+    """
+    判断本次API响应中的所有trackResults是否都送达。
+
+    如果FedEx返回多个关联件，必须所有结果均为Delivered。
+    """
+
+    if not track_results:
+        return False
+
+    return all(
+        is_track_result_delivered(item)
+        for item in track_results
+    )
+
+
+def get_actual_delivery_times(track_results):
+    """提取所有trackResult中的ACTUAL_DELIVERY时间。"""
+
+    delivery_times = []
+
+    for track_result in track_results:
+
+        date_and_times = track_result.get(
+            "dateAndTimes",
+            []
+        )
+
+        for date_item in date_and_times:
+
+            date_type = str(
+                date_item.get("type", "")
+            ).upper()
+
+            date_time = date_item.get("dateTime")
+
+            if (
+                date_type == "ACTUAL_DELIVERY"
+                and date_time
+            ):
+                delivery_times.append(date_time)
+
+    return delivery_times
+
+
+def get_final_delivery_time(track_results):
+    """
+    获取整票最终送达时间。
+
+    如果返回多个关联件，取所有ACTUAL_DELIVERY时间中最晚的时间。
+    """
+
+    delivery_times = get_actual_delivery_times(
+        track_results
+    )
+
+    if not delivery_times:
+        return ""
+
+    parsed_times = []
+
+    for delivery_time in delivery_times:
+
+        parsed = parse_iso_datetime(
+            delivery_time
+        )
+
+        if parsed is not None:
+            parsed_times.append(
+                (parsed, delivery_time)
+            )
+
+    if not parsed_times:
+        return delivery_times[-1]
+
+    parsed_times.sort(
+        key=lambda item: item[0]
+    )
+
+    return parsed_times[-1][1]
+
+
+def has_signature_pod(track_results):
+    """
+    检查availableImages是否包含签收证明。
+    """
+
+    for track_result in track_results:
+
+        available_images = track_result.get(
+            "availableImages",
+            []
+        )
+
+        for image_item in available_images:
+
+            image_type = str(
+                image_item.get("type", "")
+            ).upper()
+
+            if (
+                image_type
+                == "SIGNATURE_PROOF_OF_DELIVERY"
+            ):
+                return True
+
+    return False
+
+
+def summarize_tracking(track_response):
+    """
+    分析Track API结果。
+
+    返回：
+    {
+        "delivered": True/False,
+        "delivery_time": "...",
+        "has_pod": True/False,
+        "status": "...",
+        "piece_count": 数量
+    }
+    """
+
+    track_results = get_track_results(
+        track_response
+    )
+
+    if not track_results:
+        return {
+            "delivered": False,
+            "delivery_time": "",
+            "has_pod": False,
+            "status": "No tracking result",
+            "piece_count": 0,
+        }
+
+    fully_delivered = shipment_is_fully_delivered(
+        track_results
+    )
+
+    statuses = []
+
+    for track_result in track_results:
+
+        status = get_status_description(
+            track_result
+        )
+
+        if not status:
+            status = get_status_code(
+                track_result
+            )
+
+        if status and status not in statuses:
+            statuses.append(status)
+
+    return {
+        "delivered": fully_delivered,
+        "delivery_time": (
+            get_final_delivery_time(track_results)
+            if fully_delivered
+            else ""
+        ),
+        "has_pod": (
+            has_signature_pod(track_results)
+            if fully_delivered
+            else False
+        ),
+        "status": ", ".join(statuses),
+        "piece_count": len(track_results),
+    }
+
+# ============================================================
+# 6. 下载FedEx POD
+# ============================================================
+
+def download_pod(
+    session,
+    token,
+    tracking_number,
+    save_folder,
+):
+    """
+    下载官方FedEx Signature Proof of Delivery PDF。
+
+    成功时返回PDF完整路径。
+    失败时返回None。
+    """
+
+    save_folder.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    pdf_file = (
+        save_folder
+        / f"{tracking_number}_POD.pdf"
+    )
+
+    if (
+        pdf_file.exists()
+        and not OVERWRITE_EXISTING_POD
+    ):
+        safe_print(
+            f"  POD已存在，跳过下载：{pdf_file.name}"
+        )
+        return pdf_file
+
+    url = (
+        f"{FEDEX_BASE_URL}"
+        "/track/v1/trackingdocuments"
+    )
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-locale": LOCALE,
+        "Authorization": f"Bearer {token}",
+    }
+
+    specification = {
+        "trackingNumberInfo": {
+            "trackingNumber": tracking_number
+        }
+    }
+
+    payload = {
+        "trackDocumentDetail": {
+            "documentType":
+                "SIGNATURE_PROOF_OF_DELIVERY",
+            "documentFormat": "PDF",
+        },
+        "trackDocumentSpecification": [
+            specification
+        ],
+    }
+
+    # 只有设置了账号环境变量才添加账号字段
+    # 如果运单不属于该账号，FedEx可能返回无签名版POD或业务错误
+    if ACCOUNT_NUMBER:
+        payload["accountNumber"] = {
+            "value": ACCOUNT_NUMBER
+        }
+
+    response = session.post(
+        url,
+        headers=headers,
+        json=payload,
+        timeout=REQUEST_TIMEOUT_SECONDS,
+    )
+
+    if response.status_code != 200:
+
+        safe_print(
+            "  POD下载失败："
+            f"HTTP {response.status_code} "
+            f"{extract_error_message(response)}"
+        )
+
+        return None
+
+    try:
+        result = response.json()
+
+        documents = (
+            result.get("output", {})
+            .get("documents", [])
+        )
+
+        if not documents:
+            safe_print(
+                "  POD接口成功，但未返回PDF内容。"
+            )
+            return None
+
+        # FedEx实际返回：
+        # output.documents[0] = Base64字符串
+        pdf_b64 = documents[0]
+
+        if not isinstance(pdf_b64, str):
+            safe_print(
+                "  POD数据格式不是Base64字符串。"
+            )
+            return None
+
+        pdf_bytes = base64.b64decode(
+            pdf_b64,
+            validate=True
+        )
+
+        # PDF文件头应为%PDF
+        if not pdf_bytes.startswith(b"%PDF"):
+            safe_print(
+                "  返回内容不是有效的PDF文件。"
+            )
+            return None
+
+        with open(pdf_file, "wb") as file:
+            file.write(pdf_bytes)
+
+        safe_print(
+            f"  POD下载成功：{pdf_file.name}"
+        )
+
+        return pdf_file
+
+    except (
+        ValueError,
+        KeyError,
+        IndexError,
+        TypeError,
+        base64.binascii.Error,
+    ) as exc:
+
+        safe_print(
+            f"  POD解析或保存失败：{exc}"
+        )
+
+        return None
+
+
+# ============================================================
+# 7. 读取输入Excel
+# ============================================================
+
+def read_fedex_shipments(input_excel):
+    """
+    读取Excel前两列。
+
+    第1列：货代名称
+    第2列：运单号
+
+    仅返回第一列包含FedEx的运单。
+    """
+
+    if not input_excel.exists():
+        raise FileNotFoundError(
+            f"找不到输入Excel：{input_excel}"
+        )
+
+    workbook = load_workbook(
+        input_excel,
+        read_only=True,
+        data_only=True,
+    )
+
+    if INPUT_SHEET_NAME:
+        if INPUT_SHEET_NAME not in workbook.sheetnames:
+            raise ValueError(
+                f"找不到工作表：{INPUT_SHEET_NAME}"
+            )
+
+        worksheet = workbook[
+            INPUT_SHEET_NAME
+        ]
+    else:
+        worksheet = workbook[
+            workbook.sheetnames[0]
+        ]
+
+    start_row = 2 if HAS_HEADER else 1
+
+    tracking_numbers = []
+    seen = set()
+
+    for row_number in range(
+        start_row,
+        worksheet.max_row + 1
+    ):
+        carrier = worksheet.cell(
+            row=row_number,
+            column=1
+        ).value
+
+        tracking_value = worksheet.cell(
+            row=row_number,
+            column=2
+        ).value
+
+        if not is_fedex_carrier(carrier):
+            continue
+
+        tracking_number = clean_tracking_number(
+            tracking_value
+        )
+
+        if not tracking_number:
+            safe_print(
+                f"第{row_number}行运单号为空，跳过。"
+            )
+            continue
+
+        if tracking_number in seen:
+            safe_print(
+                f"第{row_number}行运单号重复，跳过："
+                f"{tracking_number}"
+            )
+            continue
+
+        seen.add(tracking_number)
+        tracking_numbers.append(
+            tracking_number
+        )
+
+    workbook.close()
+
+    return tracking_numbers
+
+
+# ============================================================
+# 8. 输出结果Excel
+# ============================================================
+
+def write_delivered_excel(
+    output_excel,
+    delivered_rows,
+):
+    """
+    输出三列：
+
+    A列：运单号
+    B列：送达时间
+    C列：是否有POD
+    """
+
+    output_excel.parent.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "FedEx Delivered"
+
+    headers = [
+        "运单号",
+        "送达时间",
+        "是否有POD",
+    ]
+
+    worksheet.append(headers)
+
+    header_fill = PatternFill(
+        fill_type="solid",
+        fgColor="4472C4"
+    )
+
+    header_font = Font(
+        color="FFFFFF",
+        bold=True
+    )
+
+    for column_number, header in enumerate(
+        headers,
+        start=1
+    ):
+        cell = worksheet.cell(
+            row=1,
+            column=column_number
+        )
+
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center"
+        )
+
+    for row_item in delivered_rows:
+
+        worksheet.append(
+            [
+                row_item["tracking_number"],
+                row_item["delivery_time"],
+                row_item["has_pod"],
+            ]
+        )
+
+    # 运单号按文本储存
+    for row_number in range(
+        2,
+        worksheet.max_row + 1
+    ):
+        worksheet.cell(
+            row=row_number,
+            column=1
+        ).number_format = "@"
+
+        worksheet.cell(
+            row=row_number,
+            column=3
+        ).alignment = Alignment(
+            horizontal="center"
+        )
+
+    worksheet.freeze_panes = "A2"
+    worksheet.auto_filter.ref = (
+        f"A1:C{worksheet.max_row}"
+    )
+
+    column_widths = {
+        1: 22,
+        2: 24,
+        3: 16,
+    }
+
+    for column_number, width in (
+        column_widths.items()
+    ):
+        worksheet.column_dimensions[
+            get_column_letter(column_number)
+        ].width = width
+
+    worksheet.row_dimensions[1].height = 24
+
+    workbook.save(output_excel)
+
+
+# ============================================================
+# 9. 主程序
+# ============================================================
+
+def main():
+
+    safe_print("=" * 70)
+    safe_print("FedEx送达状态及POD批量处理")
+    safe_print("=" * 70)
+
+    POD_FOLDER.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    tracking_numbers = read_fedex_shipments(
+        INPUT_EXCEL
+    )
+
+    safe_print(
+        f"Excel中找到 {len(tracking_numbers)} "
+        "个FedEx运单。"
+    )
+
+    if not tracking_numbers:
+
+        write_delivered_excel(
+            OUTPUT_EXCEL,
+            []
+        )
+
+        safe_print(
+            "没有需要处理的FedEx运单。"
+        )
+        safe_print(
+            f"已生成空结果文件：{OUTPUT_EXCEL}"
+        )
+        return
+
+    delivered_rows = []
+
+    delivered_count = 0
+    skipped_count = 0
+    error_count = 0
+    pod_download_count = 0
+
+    with requests.Session() as session:
+
+        token = get_fedex_token(session)
+
+        total = len(tracking_numbers)
+
+        for index, tracking_number in enumerate(
+            tracking_numbers,
+            start=1
+        ):
+
+            safe_print("")
+            safe_print(
+                f"[{index}/{total}] "
+                f"查询运单：{tracking_number}"
+            )
+
+            try:
+                track_response = query_tracking(
+                    session,
+                    token,
+                    tracking_number
+                )
+
+                summary = summarize_tracking(
+                    track_response
+                )
+
+                safe_print(
+                    f"  状态：{summary['status']}"
+                )
+
+                safe_print(
+                    "  API返回包裹结果数："
+                    f"{summary['piece_count']}"
+                )
+
+                if not summary["delivered"]:
+
+                    safe_print(
+                        "  尚未全部送达，本次跳过。"
+                    )
+
+                    skipped_count += 1
+                    time.sleep(
+                        REQUEST_INTERVAL_SECONDS
+                    )
+                    continue
+
+                delivered_count += 1
+
+                delivery_time = format_delivery_time(
+                    summary["delivery_time"]
+                )
+
+                has_pod = bool(
+                    summary["has_pod"]
+                )
+
+                safe_print(
+                    f"  送达时间：{delivery_time}"
+                )
+
+                safe_print(
+                    f"  是否有POD：{has_pod}"
+                )
+
+                # availableImages显示有POD时才下载
+                if has_pod:
+
+                    pod_path = download_pod(
+                        session=session,
+                        token=token,
+                        tracking_number=tracking_number,
+                        save_folder=POD_FOLDER,
+                    )
+
+                    # 只有PDF实际保存成功，输出TRUE
+                    has_pod = pod_path is not None
+
+                    if pod_path is not None:
+                        pod_download_count += 1
+
+                delivered_rows.append(
+                    {
+                        "tracking_number":
+                            tracking_number,
+                        "delivery_time":
+                            delivery_time,
+                        "has_pod":
+                            has_pod,
+                    }
+                )
+
+            except PermissionError as exc:
+
+                safe_print(
+                    f"  权限或Token错误：{exc}"
+                )
+
+                # 重新获取一次Token
+                safe_print(
+                    "  正在重新获取Token并重试。"
+                )
+
+                try:
+                    token = get_fedex_token(
+                        session
+                    )
+
+                    track_response = query_tracking(
+                        session,
+                        token,
+                        tracking_number
+                    )
+
+                    summary = summarize_tracking(
+                        track_response
+                    )
+
+                    if summary["delivered"]:
+
+                        delivery_time = (
+                            format_delivery_time(
+                                summary[
+                                    "delivery_time"
+                                ]
+                            )
+                        )
+
+                        has_pod = bool(
+                            summary["has_pod"]
+                        )
+
+                        if has_pod:
+
+                            pod_path = download_pod(
+                                session=session,
+                                token=token,
+                                tracking_number=(
+                                    tracking_number
+                                ),
+                                save_folder=POD_FOLDER,
+                            )
+
+                            has_pod = (
+                                pod_path is not None
+                            )
+
+                            if pod_path is not None:
+                                pod_download_count += 1
+
+                        delivered_rows.append(
+                            {
+                                "tracking_number":
+                                    tracking_number,
+                                "delivery_time":
+                                    delivery_time,
+                                "has_pod":
+                                    has_pod,
+                            }
+                        )
+
+                        delivered_count += 1
+
+                    else:
+                        skipped_count += 1
+
+                except Exception as retry_exc:
+
+                    safe_print(
+                        f"  重试仍失败：{retry_exc}"
+                    )
+
+                    error_count += 1
+
+            except Exception as exc:
+
+                safe_print(
+                    f"  处理失败：{exc}"
+                )
+
+                error_count += 1
+
+            # 每处理一票就重新写一次结果
+            # 程序意外中断时，已经完成的数据不会全部丢失
+            write_delivered_excel(
+                OUTPUT_EXCEL,
+                delivered_rows
+            )
+
+            time.sleep(
+                REQUEST_INTERVAL_SECONDS
+            )
+
+    # 最终再保存一次
+    write_delivered_excel(
+        OUTPUT_EXCEL,
+        delivered_rows
+    )
+
+    safe_print("")
+    safe_print("=" * 70)
+    safe_print("处理完成")
+    safe_print("=" * 70)
+    safe_print(
+        f"FedEx运单总数：{len(tracking_numbers)}"
+    )
+    safe_print(
+        f"确认全部送达：{delivered_count}"
+    )
+    safe_print(
+        f"尚未送达并跳过：{skipped_count}"
+    )
+    safe_print(
+        f"处理失败：{error_count}"
+    )
+    safe_print(
+        f"POD成功获取或本地已存在："
+        f"{pod_download_count}"
+    )
+    safe_print(
+        f"结果Excel：{OUTPUT_EXCEL}"
+    )
+    safe_print(
+        f"POD目录：{POD_FOLDER}"
+    )
+
+
+if __name__ == "__main__":
+    main()

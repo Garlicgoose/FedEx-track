@@ -1,0 +1,268 @@
+# 对子单的查询,保存json,目前存在一些问题,534047231174有一460子件,但是只返回40个
+
+import requests
+import json
+
+# ======================================
+# 配置
+# ======================================
+
+CLIENT_ID = "l726270ca1e3e14d2092057988b4aee3db"
+
+CLIENT_SECRET = "ea3249b6848d41ddae192a8111e4afd0"
+
+FEDEX_BASE_URL = "https://apis.fedex.com"
+
+MASTER_AWB = "472887355535"
+
+
+# ======================================
+# 获取Token
+# ======================================
+
+def get_token():
+
+    url = f"{FEDEX_BASE_URL}/oauth/token"
+
+    payload = {
+        "grant_type": "client_credentials",
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+    }
+
+    headers = {
+        "Content-Type":
+        "application/x-www-form-urlencoded"
+    }
+
+    r = requests.post(
+        url,
+        data=payload,
+        headers=headers
+    )
+
+    r.raise_for_status()
+
+    return r.json()["access_token"]
+
+
+# ======================================
+# 查询MPS
+# ======================================
+
+def query_mps(
+        session,
+        token,
+        master_tracking
+):
+
+    url = (
+        f"{FEDEX_BASE_URL}"
+        "/track/v1/associatedshipments"
+    )
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+        "X-locale": "en_US"
+    }
+
+    payload = {
+        "includeDetailedScans": True,
+
+        "associatedType": "STANDARD_MPS",
+
+        "masterTrackingNumberInfo": {
+            "trackingNumberInfo": {
+                "trackingNumber":
+                master_tracking
+            }
+        }
+    }
+
+    response = session.post(
+        url,
+        headers=headers,
+        json=payload,
+        timeout=60
+    )
+
+    print()
+    print("HTTP状态:",
+          response.status_code)
+
+    response.raise_for_status()
+
+    data = response.json()
+
+    import os
+
+    with open(
+        "mps_result.json",
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        json.dump(
+            data,
+            f,
+            ensure_ascii=False,
+            indent=2
+        )
+
+    print(
+        "保存路径:",
+        os.path.abspath(
+            "mps_result.json"
+        )
+    )
+
+    return data
+
+
+# ======================================
+# 主程序
+# ======================================
+
+def main():
+
+    session = requests.Session()
+
+    token = get_token()
+
+    print("Token获取成功")
+
+    data = query_mps(
+        session,
+        token,
+        MASTER_AWB
+    )
+
+    results = (
+        data["output"]
+        ["completeTrackResults"][0]
+        ["trackResults"]
+    )
+
+    print()
+    print("=" * 100)
+    print(
+        f"Master AWB: {MASTER_AWB}"
+    )
+    print("=" * 100)
+
+    total = len(results)
+
+    delivered = 0
+
+    undelivered_list = []
+
+    for idx, item in enumerate(
+        results,
+        start=1
+    ):
+
+        tracking_no = (
+            item
+            .get(
+                "trackingNumberInfo",
+                {}
+            )
+            .get(
+                "trackingNumber",
+                ""
+            )
+        )
+
+        status_code = (
+            item
+            .get(
+                "latestStatusDetail",
+                {}
+            )
+            .get(
+                "code",
+                ""
+            )
+        )
+
+        status_desc = (
+            item
+            .get(
+                "latestStatusDetail",
+                {}
+            )
+            .get(
+                "description",
+                ""
+            )
+        )
+
+        if status_code == "DL":
+
+            delivered += 1
+
+        else:
+
+            undelivered_list.append(
+                (
+                    tracking_no,
+                    status_desc
+                )
+            )
+
+        print(
+            f"{idx:03d} | "
+            f"{tracking_no:<15} | "
+            f"{status_code:<5} | "
+            f"{status_desc}"
+        )
+
+    print()
+    print("=" * 100)
+
+    print("总件数:", total)
+    print("已送达:", delivered)
+    print(
+        "未送达:",
+        total - delivered
+    )
+
+    print()
+
+    if delivered == total:
+
+        print(
+            "✅ 全部送达"
+        )
+
+    else:
+
+        print(
+            "❌ 存在未送达货件"
+        )
+
+    print("=" * 100)
+
+    if undelivered_list:
+
+        print()
+        print(
+            "未送达明细:"
+        )
+
+        print()
+
+        for awb, status in (
+            undelivered_list
+        ):
+
+            print(
+                awb,
+                "=>",
+                status
+            )
+
+
+if __name__ == "__main__":
+    main()
