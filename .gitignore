@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Runtime data (database / settings / machine-id cache - never upload)
+data/
+settings.json
+
+# Git
+.git/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+_build_*/
+build_log.txt
+
+# Playwright Chromium (415MB, never upload; rebuilt on target machine)
+chrome/
